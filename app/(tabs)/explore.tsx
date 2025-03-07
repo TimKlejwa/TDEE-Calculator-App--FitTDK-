@@ -1,109 +1,141 @@
-import { StyleSheet, Image, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
 
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+export default function TDEECalculator() {
+  const [weight, setWeight] = useState('');
+  const [height, setHeight] = useState('');
+  const [age, setAge] = useState('');
+  const [sex, setSex] = useState('male');
+  const [activityLevel, setActivityLevel] = useState<'sedentary' | 'light' | 'moderate' | 'active' | 'very_active'>('moderate');
+  const [goalChange, setGoalChange] = useState('');
+  const [result, setResult] = useState<React.ReactNode>(null);
 
-export default function TabTwoScreen() {
+  const calculateTDEE = () => {
+    const weightNum = parseFloat(weight);
+    const heightNum = parseFloat(height);
+    const ageNum = parseInt(age);
+    const goalNum = parseFloat(goalChange);
+
+    if (isNaN(weightNum) || isNaN(heightNum) || isNaN(ageNum) || isNaN(goalNum)) {
+      setResult(<Text>Please enter valid numbers.</Text>);
+      return;
+    }
+
+    let bmr;
+    if (sex === 'male') {
+      bmr = 10 * weightNum + 6.25 * heightNum - 5 * ageNum + 5;
+    } else {
+      bmr = 10 * weightNum + 6.25 * heightNum - 5 * ageNum - 161;
+    }
+
+    const activityMultipliers = {
+      sedentary: 1.2,
+      light: 1.375,
+      moderate: 1.55,
+      active: 1.725,
+      very_active: 1.9,
+    };
+
+    const tdee = bmr * (activityMultipliers[activityLevel] || 1.55); // Default to 'moderate' if input is invalid
+    const targetCalories = tdee + goalNum * 500;
+
+    setResult(
+      <Text>
+        TDEE: {tdee.toFixed(2)} kcal/day{'\n'}
+        Target Calories: {targetCalories.toFixed(2)} kcal/day
+      </Text>
+    );
+  };
+
+  const handleActivityLevelChange = (text: string) => {
+    const validLevels: ('sedentary' | 'light' | 'moderate' | 'active' | 'very_active')[] = ['sedentary', 'light', 'moderate', 'active', 'very_active'];
+    if (validLevels.includes(text as 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active')) {
+      setActivityLevel(text as 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active');
+    } else {
+      setActivityLevel('moderate'); // Fallback to 'moderate' if the input is invalid
+    }
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
-          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
-            custom fonts such as this one.
-          </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user's current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+    <View style={styles.container}>
+      <Text style={styles.label}>Weight (kg):</Text>
+      <TextInput
+        style={styles.input}
+        keyboardType="numeric"
+        value={weight}
+        onChangeText={setWeight}
+      />
+
+      <Text style={styles.label}>Height (cm):</Text>
+      <TextInput
+        style={styles.input}
+        keyboardType="numeric"
+        value={height}
+        onChangeText={setHeight}
+      />
+
+      <Text style={styles.label}>Age:</Text>
+      <TextInput
+        style={styles.input}
+        keyboardType="numeric"
+        value={age}
+        onChangeText={setAge}
+      />
+
+      <Text style={styles.label}>Sex (male/female):</Text>
+      <TextInput
+        style={styles.input}
+        value={sex}
+        onChangeText={setSex}
+      />
+
+      <Text style={styles.label}>Activity Level (sedentary, light, moderate, active, very_active):</Text>
+      <TextInput
+        style={styles.input}
+        value={activityLevel}
+        onChangeText={handleActivityLevelChange}
+      />
+
+      <Text style={styles.label}>Goal Change per Week (kg):</Text>
+      <TextInput
+        style={styles.input}
+        keyboardType="numeric"
+        value={goalChange}
+        onChangeText={setGoalChange}
+      />
+
+      <Button title="Calculate TDEE" onPress={calculateTDEE} />
+
+      {result && <View style={styles.resultContainer}>{result}</View>}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#fff', // Set background color to white
+    justifyContent: 'center', // Center the content vertically
   },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
+  label: {
+    fontSize: 16,
+    marginVertical: 5,
+  },
+  input: {
+    borderWidth: 1,
+    padding: 8,
+    marginBottom: 15,
+    borderRadius: 4,
+    backgroundColor: '#f4f4f4', // Give inputs a light background color for visibility
+  },
+  resultContainer: {
+    marginTop: 20,
+    padding: 10,
+    borderWidth: 1,
+    borderRadius: 4,
+    backgroundColor: '#f0f0f0', // Light background color for results
   },
 });
+
+
