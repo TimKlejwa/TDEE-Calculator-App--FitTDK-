@@ -1,61 +1,217 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import React, { useState } from "react";
+import { View, Text, TextInput, Button, Alert, Animated, Easing} from "react-native";
+import { Picker } from '@react-native-picker/picker';
+import DateTimePickerModal from "react-native-modal-datetime-picker"; // For date picker
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+type RootStackParamList = {
+  GetStartedScreen: undefined;
+  MainScreen: undefined;
+};
 
-export default function HomeScreen() {
+type Props = NativeStackScreenProps<RootStackParamList, "GetStartedScreen">;
+
+export default function GetStartedScreen({ navigation }: Props) {
+  const [startDate, setStartDate] = useState("");
+  const [weight, setWeight] = useState("");
+  const [goalWeight, setGoalWeight] = useState("");
+  const [goalChangePerWeek, setGoalChangePerWeek] = useState("");
+  const [height, setHeight] = useState("");
+  const [age, setAge] = useState("");
+  const [gender, setGender] = useState("");
+  const [activityLevel, setActivityLevel] = useState("Low");
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isDatePickerVisible, setDatePickerVisible] = useState(false);
+
+  const steps = [
+    { label: "Start Date", value: startDate, setter: setStartDate },
+    { label: "Starting Weight (lbs)", value: weight, setter: setWeight },
+    { label: "Goal Weight (lbs)", value: goalWeight, setter: setGoalWeight },
+    { label: "Goal Change per Week (lbs)", value: goalChangePerWeek, setter: setGoalChangePerWeek },
+    { label: "Height (inches)", value: height, setter: setHeight },
+    { label: "Age", value: age, setter: setAge },
+    { label: "Gender (Male/Female)", value: gender, setter: setGender },
+    { label: "Activity Level", value: activityLevel, setter: setActivityLevel },
+  ];
+
+  const slideAnim = new Animated.Value(0);
+
+  const handleNext = () => {
+    const currentField = steps[currentStep];
+    if (!currentField.value) {
+      Alert.alert("Error", "Please fill in the field.");
+      return;
+    }
+
+    Animated.timing(slideAnim, {
+      toValue: -500,
+      duration: 300,
+      easing: Easing.ease,
+      useNativeDriver: true,
+    }).start(() => {
+      setCurrentStep((prevStep) => prevStep + 1);
+      slideAnim.setValue(500);
+
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 300,
+        easing: Easing.ease,
+        useNativeDriver: true,
+      }).start();
+    });
+  };
+
+  const handleSubmit = () => {
+    if (steps.some((step) => !step.value)) {
+      Alert.alert("Error", "Please fill in all fields.");
+      return;
+    }
+
+    console.log("User info saved:", {
+      startDate,
+      weight,
+      goalWeight,
+      goalChangePerWeek,
+      height,
+      age,
+      gender,
+      activityLevel,
+    });
+    navigation.replace("MainScreen");
+  };
+
+  const showDatePicker = () => {
+    setDatePickerVisible(true);
+  };
+
+  const hideDatePicker = () => {
+    setDatePickerVisible(false);
+  };
+
+  const handleDateConfirm = (date: Date) => {
+    setStartDate(date.toLocaleDateString());
+    hideDatePicker();
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/logo.jpg')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          To get started tap the <ThemedText type="defaultSemiBold">"TDEE"</ThemedText> button in the bottom right corner.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Input Data</ThemedText>
-        <ThemedText>
-         Begin inputing your data. You can input your weight at the beginning of the day, and then input how many calories you've consumed in the given day.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Set your Goals</ThemedText>
-        <ThemedText>
-        The app will automatically calculate your TDEE (total daily energy expenditure) and give you recommendations based on your goals, and the inputs given.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 20 }}>
+      {currentStep === 0 ? (
+        // Welcome message and button
+        <View>
+          <Text>Welcome! Let's get started.</Text>
+          <Button title="Get Started" onPress={() => setCurrentStep(1)} />
+        </View>
+      ) : (
+        // Slide transition questions
+        <Animated.View style={{ transform: [{ translateX: slideAnim }] }}>
+          {currentStep === 1 && (
+            <>
+              <Text>Start Date:</Text>
+              <Button title="Pick Date" onPress={showDatePicker} />
+              <Text>{startDate || "No date selected"}</Text>
+            </>
+          )}
+
+          {currentStep === 2 && (
+            <>
+              <Text>Starting Weight (lbs):</Text>
+              <TextInput
+                placeholder="Weight"
+                keyboardType="numeric"
+                value={weight}
+                onChangeText={setWeight}
+                style={{ height: 40, borderColor: "gray", borderWidth: 1, marginBottom: 20, width: "100%", paddingLeft: 10 }}
+              />
+            </>
+          )}
+
+          {currentStep === 3 && (
+            <>
+              <Text>Goal Weight (lbs):</Text>
+              <TextInput
+                placeholder="Goal Weight"
+                keyboardType="numeric"
+                value={goalWeight}
+                onChangeText={setGoalWeight}
+                style={{ height: 40, borderColor: "gray", borderWidth: 1, marginBottom: 20, width: "100%", paddingLeft: 10 }}
+              />
+            </>
+          )}
+
+          {currentStep === 4 && (
+            <>
+              <Text>Goal Change per Week (lbs):</Text>
+              <TextInput
+                placeholder="0.5"
+                keyboardType="numeric"
+                value={goalChangePerWeek}
+                onChangeText={setGoalChangePerWeek}
+                style={{ height: 40, borderColor: "gray", borderWidth: 1, marginBottom: 20, width: "100%", paddingLeft: 10 }}
+              />
+            </>
+          )}
+
+          {currentStep === 5 && (
+            <>
+              <Text>Height (inches):</Text>
+              <TextInput
+                placeholder="Height"
+                keyboardType="numeric"
+                value={height}
+                onChangeText={setHeight}
+                style={{ height: 40, borderColor: "gray", borderWidth: 1, marginBottom: 20, width: "100%", paddingLeft: 10 }}
+              />
+            </>
+          )}
+
+          {currentStep === 6 && (
+            <>
+              <Text>Age:</Text>
+              <TextInput
+                placeholder="Age"
+                keyboardType="numeric"
+                value={age}
+                onChangeText={setAge}
+                style={{ height: 40, borderColor: "gray", borderWidth: 1, marginBottom: 20, width: "100%", paddingLeft: 10 }}
+              />
+            </>
+          )}
+
+          {currentStep === 7 && (
+            <>
+              <Text>Gender (Male/Female):</Text>
+              <TextInput
+                placeholder="Gender"
+                value={gender}
+                onChangeText={setGender}
+                style={{ height: 40, borderColor: "gray", borderWidth: 1, marginBottom: 20, width: "100%", paddingLeft: 10 }}
+              />
+            </>
+          )}
+
+          {currentStep === 8 && (
+            <>
+              <Text>Activity Level:</Text>
+              <Picker selectedValue={activityLevel} onValueChange={setActivityLevel} style={{ width: "100%", marginBottom: 20 }}>
+                <Picker.Item label="Low" value="Low" />
+                <Picker.Item label="Moderate" value="Moderate" />
+                <Picker.Item label="High" value="High" />
+                <Picker.Item label="Extreme" value="Extreme" />
+              </Picker>
+            </>
+          )}
+
+          <Button title={currentStep === steps.length - 1 ? "Submit" : "Next"} onPress={currentStep === steps.length - 1 ? handleSubmit : handleNext} />
+        </Animated.View>
+      )}
+
+      <DateTimePickerModal
+        isVisible={isDatePickerVisible}
+        mode="date"
+        onConfirm={handleDateConfirm}
+        onCancel={hideDatePicker}
+      />
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
