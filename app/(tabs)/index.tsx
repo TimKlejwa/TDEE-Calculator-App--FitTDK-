@@ -1,27 +1,29 @@
 import React, { useState } from "react";
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  Button, 
-  Alert, 
-  Animated, 
-  Easing, 
-  StyleSheet 
-} from "react-native";
+import { View, Text, TextInput, Button, Animated, Easing, StyleSheet } from "react-native";
 import { Picker } from '@react-native-picker/picker';
-import DateTimePickerModal from "react-native-modal-datetime-picker"; 
+import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 type RootStackParamList = {
   GetStartedScreen: undefined;
   MainScreen: undefined;
+  ResultScreen: { 
+    date: Date;
+    weight: string;
+    goalWeight: string;
+    goalChangePerWeek: string;
+    height: string;
+    age: string;
+    gender: string;
+    activityLevel: string;
+  };
 };
 
 type Props = NativeStackScreenProps<RootStackParamList, "GetStartedScreen">;
 
 export default function GetStartedScreen({ navigation }: Props) {
-  const [startDate, setStartDate] = useState("");
+  const [date, setDate] = useState(new Date());
+  const [showPicker, setShowPicker] = useState(false);
   const [weight, setWeight] = useState("");
   const [goalWeight, setGoalWeight] = useState("");
   const [goalChangePerWeek, setGoalChangePerWeek] = useState("");
@@ -30,24 +32,17 @@ export default function GetStartedScreen({ navigation }: Props) {
   const [gender, setGender] = useState("");
   const [activityLevel, setActivityLevel] = useState("Low");
   const [currentStep, setCurrentStep] = useState(0);
-  const [isDatePickerVisible, setDatePickerVisible] = useState(false);
-
   const slideAnim = new Animated.Value(0);
 
-  // Function to show date picker
-  const showDatePicker = () => {
-    setDatePickerVisible(true);
+  const toggleDatepicker = () => {
+    setShowPicker(!showPicker);
   };
 
-  // Function to hide date picker
-  const hideDatePicker = () => {
-    setDatePickerVisible(false);
-  };
-
-  // Function to handle date selection
-  const handleDateConfirm = (date: Date) => {
-    setStartDate(date.toLocaleDateString());
-    hideDatePicker();
+  const onChange = (selectedDate: Date | undefined) => {
+    if (selectedDate) {
+      setDate(selectedDate);
+    }
+    toggleDatepicker();
   };
 
   const handleNext = () => {
@@ -70,7 +65,7 @@ export default function GetStartedScreen({ navigation }: Props) {
 
   const handleSubmit = () => {
     console.log("User info saved:", {
-      startDate,
+      date,
       weight,
       goalWeight,
       goalChangePerWeek,
@@ -79,7 +74,18 @@ export default function GetStartedScreen({ navigation }: Props) {
       gender,
       activityLevel,
     });
-    navigation.replace("MainScreen");
+
+    // Navigate to ResultScreen and pass the collected data
+    navigation.navigate("ResultScreen", {
+      date,
+      weight,
+      goalWeight,
+      goalChangePerWeek,
+      height,
+      age,
+      gender,
+      activityLevel,
+    });
   };
 
   return (
@@ -95,13 +101,13 @@ export default function GetStartedScreen({ navigation }: Props) {
           {currentStep === 1 && (
             <View>
               <Text>Start Date:</Text>
-              <Button title="Pick Date" onPress={showDatePicker} color="green" />
-              <Text>{startDate || "No date selected"}</Text>
+              <Text>{date.toLocaleDateString()}</Text>
               <DateTimePickerModal
-                isVisible={isDatePickerVisible}
+                isVisible={showPicker}
                 mode="date"
-                onConfirm={handleDateConfirm}
-                onCancel={hideDatePicker}
+                onConfirm={onChange}
+                onCancel={toggleDatepicker}
+                date={date}
               />
             </View>
           )}
@@ -123,7 +129,7 @@ export default function GetStartedScreen({ navigation }: Props) {
             <View>
               <Text>Goal Weight (lbs):</Text>
               <TextInput
-                placeholder="Enter goal weight"
+                placeholder="0.0"
                 keyboardType="numeric"
                 value={goalWeight}
                 onChangeText={setGoalWeight}
@@ -136,7 +142,7 @@ export default function GetStartedScreen({ navigation }: Props) {
             <View>
               <Text>Goal Change per Week (lbs):</Text>
               <TextInput
-                placeholder="0.5"
+                placeholder="0.0"
                 keyboardType="numeric"
                 value={goalChangePerWeek}
                 onChangeText={setGoalChangePerWeek}
@@ -149,7 +155,7 @@ export default function GetStartedScreen({ navigation }: Props) {
             <View>
               <Text>Height (inches):</Text>
               <TextInput
-                placeholder="Enter height"
+                placeholder="0.0"
                 keyboardType="numeric"
                 value={height}
                 onChangeText={setHeight}
@@ -174,12 +180,16 @@ export default function GetStartedScreen({ navigation }: Props) {
           {currentStep === 7 && (
             <View>
               <Text>Gender:</Text>
-              <TextInput
-                placeholder="Male/Female"
-                value={gender}
-                onChangeText={setGender}
-                style={styles.input}
-              />
+              <Picker
+                selectedValue={gender}
+                onValueChange={(itemValue) => setGender(itemValue)}
+                style={styles.picker}
+              >
+                <Picker.Item label="Select Gender" value="" />
+                <Picker.Item label="Male" value="Male" />
+                <Picker.Item label="Female" value="Female" />
+                <Picker.Item label="Other" value="Other" />
+              </Picker>
             </View>
           )}
 
@@ -210,7 +220,6 @@ export default function GetStartedScreen({ navigation }: Props) {
   );
 }
 
-// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -239,4 +248,3 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 });
-
